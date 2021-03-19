@@ -1,4 +1,4 @@
-/* text.c - text functions for DUMPROWS
+/* text.c - text (string) functions for DUMPROWS
  *
  * Copyright (c) 2021 Jeffrey Paul Bourdier
  *
@@ -14,50 +14,14 @@
  * Include Files *
  *****************/
 
-/* printf */
-#include <stdio.h>
-
-#ifndef _WIN32
-/* strchr, strlen, strrchr */
-#  include <string.h>
-#endif
-
-/* (Win32 only) string.h:
- *   strchr, strlen, strrchr
- *
- * text_compare
- */
-#include "text.h"
+#include <string.h>  /* strchr, strlen, strrchr */
+#include "text.h"    /* text_compare */
 
 
 /*************
  * Functions *
  *************/
 
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * Output an HTML document with the given content/attribution.
- *   title:  <title> element content
- *   addl_head:  additional <head> element content (style, etc.)
- *   body_attr:  <body> element attribution (e.g., onload)
- *   body_content:  <body> element content
- */
-void text_output(const char * title, const char * addl_head, const char * body_attr, const char * body_content)
-{
-  static const char * format =
-    "Content-Type: text/html\r\n\r\n"
-    "<!DOCTYPE html>"
-    "<html lang=\"en-US\">"
-      "<head>"
-        "<meta charset=\"UTF-8\" />"
-        "<title>%s</title>"
-        "%s"
-      "</head>"
-      "<body%s%s>%s</body>"
-    "</html>";
-
-  printf(format, title, (addl_head ? addl_head : ""), (body_attr ? " " : ""), (body_attr ? body_attr : ""), body_content);
-}
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Find the first unquoted, case-insensitive occurrence of a substring within a string.

@@ -65,10 +65,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dumprows.c" />
+    <ClCompile Include="geojson.c" />
+    <ClCompile Include="html.c" />
     <ClCompile Include="text.c" />
     <ClCompile Include="jb.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="geojson.h" />
+    <ClInclude Include="html.h" />
     <ClInclude Include="text.h" />
     <ClInclude Include="jb.h" />
   </ItemGroup>

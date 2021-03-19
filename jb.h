@@ -19,22 +19,11 @@
  * Include Files *
  *****************/
 
-/* INT_MIN (returned by jb_command_parse), PATH_MAX */
-#include <limits.h>
-
-/* fopen/fopen_s */
-#include <stdio.h>
-
-#ifdef _WIN32
-/* _MAX_PATH */
-#  include <stdlib.h>
-#else
-/* errno */
-#  include <errno.h>
-
-/* basename, dirname */
-#  include <libgen.h>
+#ifndef _WIN32
+#  include <errno.h>   /* errno */
+#  include <libgen.h>  /* basename, dirname */
 #endif
+#include <stdio.h>     /* fopen/fopen_s */
 
 
 /**************************
@@ -52,16 +41,16 @@ struct jb_command_option
  * Macro Definitions *
  *********************/
 
+#define JB_PATH_MAX_LENGTH 0x100  /* 256 */
+
 /* On Win32, fopen is considered "unsafe" and results in error C4996.
  * The corresponding "safe" function, fopen_s, is used instead.
  */
 #ifdef _WIN32
-#  define JB_DIRECTORY_SEPARATOR '\\'
-#  define JB_MAX_PATH_LENGTH _MAX_PATH
+#  define JB_PATH_SEPARATOR '\\'
 #  define jb_file_open(stream_ptr, pathname, mode) fopen_s(stream_ptr, pathname, mode)
 #else
-#  define JB_DIRECTORY_SEPARATOR '/'
-#  define JB_MAX_PATH_LENGTH PATH_MAX
+#  define JB_PATH_SEPARATOR '/'
 #  define jb_file_open(stream_ptr, pathname, mode) ((*stream_ptr = fopen(pathname, mode)) ? 0 : errno)
 #endif
 

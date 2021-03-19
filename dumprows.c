@@ -14,42 +14,21 @@
  * Include Files *
  *****************/
 
-/* stat, (struct) stat */
-#include <sys/stat.h>
-
-/* EXIT_FAILURE, EXIT_SUCCESS, free, getenv/_dupenv_s, malloc, system */
-#include <stdlib.h>
-
+#include <sys/stat.h>  /* stat, (struct) stat */
+#include <limits.h>    /* INT_MIN */
 #ifndef _WIN32
-/* uintmax_t */
-#  include <stdint.h>
-
-/* memcpy, strchr, strlen */
-#  include <string.h>
+#  include <libgen.h>  /* basename */
+#  include <stdint.h>  /* uintmax_t */
 #endif
-
-/* localtime/localtime_s, strftime, time, (struct) tm */
-#include <time.h>
-
-/* libgen.h:
- *   basename
- *
- * limits.h:
- *   INT_MIN
- *
- * stdio.h:
- *   fclose, FILE, fprintf, fputc, remove, snprintf/sprintf_s
- *
- * (struct) jb_command_option, jb_command_parse, jb_exe_strip, jb_file_open, jb_file_write, JB_MAX_PATH_LENGTH, jb_trim
- */
-#include "jb.h"
-
-/* (Win32 only) string.h:
- *   memcpy, strcat_s, strchr, strlen
- *
- * text_compare, text_output, text_search
- */
-#include "text.h"
+#include <stdio.h>     /* fclose, FILE, fprintf, fputc, remove */
+#include <stdlib.h>    /* EXIT_FAILURE, EXIT_SUCCESS, free, getenv/_dupenv_s, malloc, realloc, system */
+#include <string.h>    /* memcpy, strcat_s, strchr, strlen */
+#include <time.h>      /* localtime/localtime_s, strftime, time, (struct) tm */
+#include "geojson.h"   /* (struct) geojson_info, geojson_parse */
+#include "html.h"      /* html_element, html_format, html_output */
+#include "jb.h"        /* (struct) jb_command_option, jb_command_parse, jb_exe_strip,
+                          jb_file_open, jb_file_write, JB_PATH_MAX_LENGTH, jb_trim */
+#include "text.h"      /* text_compare, text_format, text_search */
 
 
 /*************
@@ -75,14 +54,10 @@ static const char * STR_DB_UTILITY = "database utility could not be executed";
  * Macro Definitions *
  *********************/
 
-/* On Win32, getenv is considered "unsafe" and results in error C4996, and snprintf is unavailable.
- * Corresponding functions _dupenv_s and sprintf_s (respectively) are used instead.
- */
+/* On Win32, getenv is considered "unsafe" and results in error C4996.  Corresponding function _dupenv_s is used instead. */
 #ifdef _WIN32
-#  define format_string sprintf_s
 #  define get_environment_variable(value_ptr, name) _dupenv_s(value_ptr, NULL, name)
 #else
-#  define format_string snprintf
 #  define get_environment_variable(value_ptr, name) ((*value_ptr = getenv(name)) ? 0 : -1)
 #endif
 
@@ -92,8 +67,7 @@ static const char * STR_DB_UTILITY = "database utility could not be executed";
  *********************************/
 
 int validate_query(const char * s);
-void format_results(char * html, char ** addl_head, char ** body_attr, char ** body_content);
-char * format_element(const char * name, const char * content);
+void format_results(char * output, char ** addl_head_ptr, char ** body_attr_ptr, char ** body_content_ptr);
 int finalize(char * name, time_t t, char * remote_addr, char * query_string, const char * error);
 void log_message(char * name, time_t t, char * remote_addr, char * query_string, const char * error);
 
@@ -116,7 +90,7 @@ int main(int argc, char * argv[])
   };
 
   int n, i;
-  char * v, * r, * p, * q, * p0, * q0, * p1, s[JB_MAX_PATH_LENGTH], s0[JB_MAX_PATH_LENGTH], s1[JB_MAX_PATH_LENGTH];
+  char * v, * r, * p, * q, * p0, * q0, * p1, s[JB_PATH_MAX_LENGTH], s0[JB_PATH_MAX_LENGTH], s1[JB_PATH_MAX_LENGTH];
   time_t t = time(NULL);
   struct stat st;
 
@@ -155,25 +129,25 @@ int main(int argc, char * argv[])
    * input to the database utility command line, to be executed shortly.
    */
 #ifdef _WIN32
-  /* For some very mysterious reason, if r is passed to sprintf_s (format_string),
+  /* For some very mysterious reason, if r is passed to text_format,
    * Win32 treats it as NULL.  The call to strcat_s is to circumvent this.
    */
   if (get_environment_variable(&p, "TMP") || !p) return finalize(v, t, r, q, STR_TMP_PATH);
-  format_string(s, JB_MAX_PATH_LENGTH, "%s\\%d_", p, t);
+  text_format(s, JB_PATH_MAX_LENGTH, "%s\\%d_", p, t);
   free(p);
-  strcat_s(s, JB_MAX_PATH_LENGTH, r);
+  strcat_s(s, JB_PATH_MAX_LENGTH, r);
 #else
-  format_string(s, JB_MAX_PATH_LENGTH, "/tmp/%ju_%s", (uintmax_t)t, r);
+  text_format(s, JB_PATH_MAX_LENGTH, "/tmp/%ju_%s", (uintmax_t)t, r);
 #endif
-  format_string(s0, JB_MAX_PATH_LENGTH, "%s.%s", s, "sql");
+  text_format(s0, JB_PATH_MAX_LENGTH, "%s.%s", s, "sql");
   if (jb_file_write(s0, q0, n)) return finalize(v, t, r, q, STR_FILE_WRITTEN);
 
   /* Execute the command line (which should invoke a database utility).  Note that input (SQL) is redirected
    * from the temporary file just written, and output (HTML) is redirected to another temporary file.
    */
-  format_string(s1, JB_MAX_PATH_LENGTH, "%s.%s", s, "html");
+  text_format(s1, JB_PATH_MAX_LENGTH, "%s.%s", s, "html");
   p = (char *)malloc(n = strlen(format) + strlen(p1 = argv[argc - 1]) + strlen(s0) + strlen(s1));
-  format_string(p, n, format, p1, s0, s1);
+  text_format(p, n, format, p1, s0, s1);
   n = system(p);
   free(p);
   remove(s0);
@@ -187,11 +161,8 @@ int main(int argc, char * argv[])
 
   /* Output the results, and we're done. */
   format_results(p, &q0, &p0, &p1);
-  free(p);
-  text_output("results", q0, p0, p1);
-  free(q0);
-  free(p0);
-  free(p1);
+  html_output("results", q0, p0, p1);
+  free(p); free(q0); free(p1);
   return finalize(v, t, r, q, NULL);
 }
 
@@ -229,67 +200,82 @@ int validate_query(const char * s)
  *   body_attr_ptr:  receives <body> element attribution (e.g., onload)
  *   body_content_ptr:  receives <body> element content
  */
-void format_results(char * output, char ** addl_head, char ** body_attr, char ** body_content)
+void format_results(char * output, char ** addl_head_ptr, char ** body_attr_ptr, char ** body_content_ptr)
 {
-  static const char * table_style =
-    "table { margin: auto; border-collapse: collapse; } "
-    "table, th, td { border: 1px solid; padding: 4px; } "
-    "th { background-color: #DFDFDF; }";
+  static const size_t k = sizeof(struct geojson_info);
 
-  int i;
-  char * p, * q;
+  int i, n = -1, m, j, g = -1;
+  char * p, * q, * r;
+  struct geojson_info info, * infos = NULL;
 
   /* Every database utility's output is different (e.g., some include <HTML>/<BODY>/<TABLE> tags, others don't).
    * The common denominator is the <TR> tags, which should always be present if the query was successful and rows were
    * returned.  If the output is empty, it probably means no rows were returned (e.g., SQLite/SpatiaLite does this).
    */
-  if (!strlen(output)) { *addl_head = *body_attr = NULL; *body_content = format_element("h1", "No results."); return; }
+  if (!strlen(output))
+  {
+    *addl_head_ptr = *body_attr_ptr = NULL;
+    *body_content_ptr = html_element("h1", "No results.");
+    return;
+  }
 
   /* If the output is not HTML, it probably means there was an error
    * (syntax or otherwise) with the query (table/view not found, etc.).
    */
-  if (output[0] != '<') { *addl_head = *body_attr = NULL; *body_content = format_element("pre", output); return; }
+  if (output[0] != '<')
+  {
+    *addl_head_ptr = *body_attr_ptr = NULL;
+    *body_content_ptr = html_element("pre", output);
+    return;
+  }
 
   /* If no <tr> tag is found, it could mean a query error or no rows were returned (as
    * with SQL*Plus).  In this case, just use the content of the <body> element as-is.
    */
   if (!(i = text_search(output, "<tr>")))
   {
-    *addl_head = *body_attr = NULL;
+    *addl_head_ptr = *body_attr_ptr = NULL;
     i = text_search(output, "<body>") + 5;
     output[text_search(output, "</body>") - 1] = '\0';
-    *body_content = (char *)malloc(strlen(output) - i + 1);
+    *body_content_ptr = (char *)malloc(strlen(output) - i + 1);
     p = jb_trim(output + i);
-    memcpy(*body_content, p, strlen(p) + 1);
+    memcpy(*body_content_ptr, p, strlen(p) + 1);
     return;
   }
 
-  /* If the resulting table has a WKT geometry column, show the features on a map.
-   * (For now, just assume it doesn't, extract the <tr> elements and embed them in our own <table> element.)
-   */
-  for (q = p = output + i - 1; i = text_search(q, "</tr>"); q += i + 4);
+  /* Iterate through each row, looking for a GeoJSON geometry column. */
+  for (q = p = output + i - 1; i = text_search(q, "</tr>"); q += 4)
+  {
+    /* Advance the end-pointer, and increment the row count.  If this is the header
+     * row, or we already know that there's no geometry column, go on to the next row.
+     */
+    q += i; ++n; if (!n || !g) continue;
+
+    /* Iterate through each cell, looking for a consistent geometry column. */
+    for (m = 1, r = q - i; (j = text_search(r, "<td>")) && (r += j + 3) < q; ++m)
+    {
+      if (g > 0)
+      {
+        if (m < g) continue;
+        if (m > g || geojson_parse(r, &info)) { g = 0; break; }
+      }
+      else
+      {
+        if (geojson_parse(r, &info)) continue;
+        g = m;
+      }
+
+      /* A GeoJSON geometry column was found, so add its information to the list. */
+      infos = (struct geojson_info *)realloc(infos, n * k);
+      infos[n - 1] = info;
+    }
+
+    /* If no geometry column was found past the header row, don't bother continuing to look. */
+    if (n && g < 0) g = 0;
+  }
   *q = '\0';
-  *addl_head = format_element("style", table_style);
-  *body_attr = NULL;
-  *body_content = format_element("table", p);
-}
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * Build a formatted string representing an HTML element.
- *   name:  element name
- *   content:  element content
- * Return Value:  Formatted string.  Memory for this buffer is obtained with malloc, and should be freed with free.
- */
-char * format_element(const char * name, const char * content)
-{
-  static const char * format = "<%s>%s</%s>";
-
-  char * p;
-  size_t n;
-
-  p = (char *)malloc(n = strlen(format) + 2 * strlen(name) + strlen(content));
-  format_string(p, n, format, name, content, name);
-  return p;
+  html_format(p, infos, g ? n : 0, addl_head_ptr, body_attr_ptr, body_content_ptr);
+  free(infos);
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -312,8 +298,8 @@ int finalize(char * name, time_t t, char * remote_addr, char * query_string, con
   if (error)
   {
     p = (char *)malloc(n = strlen(format) + strlen(error));
-    format_string(p, n, format, error);
-    text_output("error", NULL, NULL, p);
+    text_format(p, n, format, error);
+    html_output("error", NULL, NULL, p);
     free(p);
   }
 
@@ -346,7 +332,7 @@ void log_message(char * name, time_t t, char * remote_addr, char * query_string,
   static const char * r = "/var/log/";
 #endif
 
-  char * p, s[JB_MAX_PATH_LENGTH], ts[20];
+  char * p, s[JB_PATH_MAX_LENGTH], ts[20];
   struct tm * tm_ptr;
   size_t n = sizeof(ts);
   FILE * f;
@@ -358,7 +344,7 @@ void log_message(char * name, time_t t, char * remote_addr, char * query_string,
 #ifdef _WIN32
   jb_exe_strip(p);
 #endif
-  format_string(s, JB_MAX_PATH_LENGTH, "%s%s.log", r, p);
+  text_format(s, JB_PATH_MAX_LENGTH, "%s%s.log", r, p);
 
   /* Format the timestamp.
    * (Despite the documentation, Win32 does not support the %F or %T formatting

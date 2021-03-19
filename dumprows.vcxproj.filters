@@ -24,12 +24,24 @@
     <ClCompile Include="text.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="geojson.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="html.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="jb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="text.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="geojson.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="html.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

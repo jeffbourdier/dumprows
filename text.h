@@ -1,4 +1,4 @@
-/* text.h - text functions for DUMPROWS
+/* text.h - text (string) functions for DUMPROWS
  *
  * Copyright (c) 2021 Jeffrey Paul Bourdier
  *
@@ -19,12 +19,10 @@
  * Include Files *
  *****************/
 
-#ifdef _WIN32
-/* _strnicmp */
-#  include <string.h>
-#else
-/* strncasecmp */
-#  include <strings.h>
+#include <stdio.h>      /* snprintf/sprintf_s */
+#include <string.h>     /* strncat/strncat_s, _strnicmp */
+#ifndef _WIN32
+#  include <strings.h>  /* strncasecmp */
 #endif
 
 
@@ -32,10 +30,17 @@
  * Macro Definitions *
  *********************/
 
+/* On Win32, strncat is considered "unsafe" (resulting in error C4996), and strncasecmp & snprintf are unavailable.
+ * Corresponding functions strncat_s, _strnicmp, & sprintf_s (respectively) are used instead.
+ */
 #ifdef _WIN32
+#  define text_append(dest, size, src, n) strncat_s(dest, size, src, n)
 #  define text_compare _strnicmp
+#  define text_format sprintf_s
 #else
+#  define text_append(dest, size, src, n) strncat(dest, src, n)
 #  define text_compare strncasecmp
+#  define text_format snprintf
 #endif
 
 
@@ -43,7 +48,6 @@
  * Function Declarations *
  *************************/
 
-void text_output(const char * title, const char * addl_head, const char * body_attr, const char * body_content);
 int text_search(const char * haystack, const char * needle);
 
 

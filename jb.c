@@ -14,41 +14,19 @@
  * Include Files *
  *****************/
 
-/* mkdir, stat, (struct) stat */
-#include <sys/stat.h>
-
-/* isspace */
-#include <ctype.h>
-
+#include <sys/stat.h>  /* mkdir, stat, (struct) stat */
+#include <ctype.h>     /* isspace */
+#include <errno.h>     /* ENOENT, errno */
 #ifdef _WIN32
-/* _mkdir */
-#  include <direct.h>
-
-/* ENOENT, errno */
-#  include <errno.h>
+#  include <direct.h>  /* _mkdir */
+#else
+#  include <libgen.h>  /* basename, dirname */
 #endif
-
-/* free, malloc */
-#include <stdlib.h>
-
-/* strcmp, strdup, strlen, strncmp, strrchr */
-#include <string.h>
-
-/* (Linux only) errno.h:
- *   errno
- *
- * libgen.h:
- *   basename, dirname
- *
- * limits.h:
- *   INT_MIN
- *
- * stdio.h:
- *   fclose, FILE, fprintf, fwrite, putchar, puts, stderr
- *
- * (struct) jb_command_option, JB_DIRECTORY_SEPARATOR, jb_exe_strip, jb_file_open
- */
-#include "jb.h"
+#include <limits.h>    /* INT_MIN */
+#include <stdio.h>     /* fclose, FILE, fprintf, fwrite, putchar, puts, stderr */
+#include <stdlib.h>    /* free, malloc */
+#include <string.h>    /* strcmp, strdup, strlen, strncmp, strrchr */
+#include "jb.h"        /* (struct) jb_command_option, JB_PATH_SEPARATOR, jb_exe_strip, jb_file_open */
 
 
 /*********************************
@@ -73,7 +51,7 @@ int make_directory(const char * path);
  */
 char * basename(char * path)
 {
-  char * p = strrchr(path, JB_DIRECTORY_SEPARATOR);
+  char * p = strrchr(path, JB_PATH_SEPARATOR);
   return p ? p + 1 : path;
 }
 
@@ -84,7 +62,7 @@ char * basename(char * path)
  */
 char * dirname(char * path)
 {
-  char * p = strrchr(path, JB_DIRECTORY_SEPARATOR);
+  char * p = strrchr(path, JB_PATH_SEPARATOR);
   if (!p) return path + strlen(path);
   *p = '\0';
   return path;
@@ -167,9 +145,7 @@ int jb_command_parse(int argc, char * argv[], const char * usage, const char * h
       /* If the "help" option is present, print a full usage/help message (and exit). */
       if (n == INT_MIN)
       {
-        printf(usage_format, p, usage);
-        puts(help);
-
+        printf(usage_format, p, usage); puts(help);
 #ifdef _WIN32
         /* It is assumed that on Win32, the filename ends in ".exe" (whereas on Linux, the filename has no extension). */
         jb_exe_strip(p);
@@ -305,8 +281,7 @@ int validate_option(struct jb_command_option * options, int option_count, const 
     if (s[strlen(s) - 1] == '=') return (*(options[i].argument = text + n)) ? 1 : -1;
 
     /* Indicate that the option is present and return (valid). */
-    options[i].is_present = 1;
-    return 0;
+    options[i].is_present = 1; return 0;
   }
 
   /* If the string does not match any option, the command line is invalid. */
