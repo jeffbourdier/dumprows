@@ -15,6 +15,7 @@
  *****************/
 
 #include <ctype.h>    /* isspace */
+#include <errno.h>    /* errno */
 #include <stdlib.h>   /* free, malloc, strtod */
 #include <string.h>   /* strlen, strncmp */
 #include "geojson.h"  /* (struct) geojson_info, GEOJSON_LINESTRING, GEOJSON_POINT, GEOJSON_POLYGON */

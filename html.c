@@ -257,7 +257,7 @@ void html_format(char * rows, struct geojson_info * infos, int info_count,
   q = (char *)malloc(m = n + info_count * (strlen(anchor_format) + 32));
 
   /* Iterate through each pointer, processing as necessary to build the formatted strings. */
-  for (r = rows, *q = '\0', k = i = 0; i < info_count; ++i)
+  for (r = rows, *q = '\0', i = k = 0; i < info_count; ++i)
   {
     /* Determine the full bounds/extents (for the additional <head> element content). */
     if (infos[i].min_y < min_lat) min_lat = infos[i].min_y;

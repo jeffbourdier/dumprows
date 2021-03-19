@@ -67,7 +67,7 @@ static const char * STR_DB_UTILITY = "database utility could not be executed";
  *********************************/
 
 int validate_query(const char * s);
-void format_results(char * output, char ** addl_head_ptr, char ** body_attr_ptr, char ** body_content_ptr);
+void format_results(char * output, char ** addl_head_ptr, const char ** body_attr_ptr, char ** body_content_ptr);
 int finalize(char * name, time_t t, char * remote_addr, char * query_string, const char * error);
 void log_message(char * name, time_t t, char * remote_addr, char * query_string, const char * error);
 
@@ -200,7 +200,7 @@ int validate_query(const char * s)
  *   body_attr_ptr:  receives <body> element attribution (e.g., onload)
  *   body_content_ptr:  receives <body> element content
  */
-void format_results(char * output, char ** addl_head_ptr, char ** body_attr_ptr, char ** body_content_ptr)
+void format_results(char * output, char ** addl_head_ptr, const char ** body_attr_ptr, char ** body_content_ptr)
 {
   static const size_t k = sizeof(struct geojson_info);
 
@@ -214,7 +214,7 @@ void format_results(char * output, char ** addl_head_ptr, char ** body_attr_ptr,
    */
   if (!strlen(output))
   {
-    *addl_head_ptr = *body_attr_ptr = NULL;
+    *body_attr_ptr = *addl_head_ptr = NULL;
     *body_content_ptr = html_element("h1", "No results.");
     return;
   }
@@ -224,7 +224,7 @@ void format_results(char * output, char ** addl_head_ptr, char ** body_attr_ptr,
    */
   if (output[0] != '<')
   {
-    *addl_head_ptr = *body_attr_ptr = NULL;
+    *body_attr_ptr = *addl_head_ptr = NULL;
     *body_content_ptr = html_element("pre", output);
     return;
   }
@@ -234,7 +234,7 @@ void format_results(char * output, char ** addl_head_ptr, char ** body_attr_ptr,
    */
   if (!(i = text_search(output, "<tr>")))
   {
-    *addl_head_ptr = *body_attr_ptr = NULL;
+    *body_attr_ptr = *addl_head_ptr = NULL;
     i = text_search(output, "<body>") + 5;
     output[text_search(output, "</body>") - 1] = '\0';
     *body_content_ptr = (char *)malloc(strlen(output) - i + 1);
