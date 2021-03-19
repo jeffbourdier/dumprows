@@ -90,8 +90,9 @@ int main(int argc, char * argv[])
   };
 
   int n, i;
-  char * v, * r, * p, * q, * p0, * q0, * p1, s[JB_PATH_MAX_LENGTH], s0[JB_PATH_MAX_LENGTH], s1[JB_PATH_MAX_LENGTH];
+  char * v, * r, * p, * q, * p0, * q0, s[JB_PATH_MAX_LENGTH], s0[JB_PATH_MAX_LENGTH], s1[JB_PATH_MAX_LENGTH];
   time_t t = time(NULL);
+  const char * p1;
   struct stat st;
 
   /* Verify usage. */
@@ -160,9 +161,9 @@ int main(int argc, char * argv[])
   p[st.st_size] = '\0';
 
   /* Output the results, and we're done. */
-  format_results(p, &q0, &p0, &p1);
-  html_output("results", q0, p0, p1);
-  free(p); free(q0); free(p1);
+  format_results(p, &q0, &p1, &p0);
+  html_output("results", q0, p1, p0);
+  free(p); free(q0); free(p0);
   return finalize(v, t, r, q, NULL);
 }
 
