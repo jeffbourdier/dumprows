@@ -15,6 +15,7 @@
  *****************/
 
 #include <sys/stat.h>  /* stat, (struct) stat */
+#include <ctype.h>     /* isdigit, isupper */
 #include <limits.h>    /* INT_MIN */
 #ifndef _WIN32
 #  include <libgen.h>  /* basename */
@@ -53,6 +54,8 @@ static const char * STR_DB_UTILITY = "database utility could not be executed";
 /*********************
  * Macro Definitions *
  *********************/
+
+#define char_to_hex(c) (c - (isdigit(c) ? '0' : ((isupper(c) ? 'A' : 'a') - 0xA)))
 
 /* On Win32, getenv is considered "unsafe" and results in error C4996.  Corresponding function _dupenv_s is used instead. */
 #ifdef _WIN32
@@ -112,8 +115,8 @@ int main(int argc, char * argv[])
   q = (char *)malloc(n = strlen(p) + 2);
   for (p0 = p, q0 = q; p1 = strchr(p0, '%'); p0 += n + 3, q0 += n + 1)
   {
-    if (!p1[1]) break; i = 0x10 * (p1[1] - 0x30);
-    if (!p1[2]) break; i += p1[2] - 0x30;
+    if (!p1[1]) break; i = 0x10 * char_to_hex(p1[1]);
+    if (!p1[2]) break; i += char_to_hex(p1[2]);
     memcpy(q0, p0, n = p1 - p0);
     q0[n] = i;
   }
