@@ -253,8 +253,12 @@ void format_results(char * output, char ** addl_head_ptr, const char ** body_att
     q += i; ++n; if (!n || !g) continue;
 
     /* Iterate through each cell, looking for a consistent geometry column. */
-    for (m = 1, r = q - i; (j = text_search(r, "<td>")) && (r += j + 3) < q; ++m)
+    for (m = 1, r = q - i; (j = text_search(r, "<td")) && (r += j) < q; ++m)
     {
+      /* Advance the content pointer to the character after the <td> tag.  (There may be attributes in this tag.) */
+      while (*++r != '>');
+
+      /* Determine whether or not this cell contains valid GeoJSON geometry. */
       if (g > 0)
       {
         if (m < g) continue;
