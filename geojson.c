@@ -149,10 +149,11 @@ size_t parse_type(const char * text, struct geojson_info * info_ptr, size_t size
   const char * p = text;
   size_t n = parse_quote(p), m;
 
-  if (!n || strlen(p += n) < 10 + n) return 0;
-  if (!strncmp(p, "Point",      m =  5)) info_ptr->type = GEOJSON_POINT;      else
-  if (!strncmp(p, "LineString", m = 10)) info_ptr->type = GEOJSON_LINESTRING; else
-  if (!strncmp(p, "Polygon",    m =  7)) info_ptr->type = GEOJSON_POLYGON;    else return 0;
+  if (!n || strlen(p += n) < 12 + n) return 0;
+  if (!strncmp(p, "Point",        m =  5)) info_ptr->type = GEOJSON_POINT;      else
+  if (!strncmp(p, "LineString",   m = 10)) info_ptr->type = GEOJSON_LINESTRING; else
+  if (!strncmp(p, "Polygon",      m =  7)) info_ptr->type = GEOJSON_POLYGON;    else 
+  if (!strncmp(p, "MultiPolygon", m = 12)) info_ptr->type = GEOJSON_POLYGON;    else return 0;
   if (text_compare(p += m, text, n)) return 0;
   text_append(info_ptr->text, size, "'", 1);
   text_append(info_ptr->text, size, text + n, m);
