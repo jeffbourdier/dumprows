@@ -48,7 +48,7 @@ struct geojson_info
  * Function Declarations *
  *************************/
 
-int geojson_parse(const char * text, struct geojson_info * info_ptr);
+int geojson_parse(char * text, struct geojson_info * info_ptr);
 
 
 #endif  /* (prevent multiple inclusion) */

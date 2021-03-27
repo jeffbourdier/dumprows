@@ -48,6 +48,7 @@
  * Function Declarations *
  *************************/
 
+char * text_find(char * haystack, const char * needle);
 int text_search(const char * haystack, const char * needle);
 
 

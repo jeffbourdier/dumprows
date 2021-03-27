@@ -19,7 +19,7 @@
 #include <stdlib.h>   /* free, malloc, strtod */
 #include <string.h>   /* strlen, strncmp */
 #include "geojson.h"  /* (struct) geojson_info, GEOJSON_LINESTRING, GEOJSON_POINT, GEOJSON_POLYGON */
-#include "text.h"     /* text_append, text_compare, text_search */
+#include "text.h"     /* text_append, text_compare, text_find */
 
 
 /**************************
@@ -64,12 +64,12 @@ size_t parse_bounds(const char * text, struct geojson_info * info_ptr, size_t si
  *   info_ptr:  receives GeoJSON geometry information
  * Return Value:  Zero on success (content appears to be valid GeoJSON geometry); otherwise, nonzero.
  */
-int geojson_parse(const char * text, struct geojson_info * info_ptr)
+int geojson_parse(char * text, struct geojson_info * info_ptr)
 {
   static const char * name1 = "type";
   static const char * name2 = "coordinates";
 
-  const char * p, * q = text + text_search(text, "</td>") - 1;
+  const char * p, * q = text_find(text, "</td>");
   enum parsing_state state = PARSING_BEGIN;
   size_t n, m = q - text;
 

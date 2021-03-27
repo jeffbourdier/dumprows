@@ -29,7 +29,7 @@
 #include "html.h"      /* html_element, html_format, html_output */
 #include "jb.h"        /* (struct) jb_command_option, jb_command_parse, jb_exe_strip,
                           jb_file_open, jb_file_write, JB_PATH_MAX_LENGTH, jb_trim */
-#include "text.h"      /* text_compare, text_format, text_search */
+#include "text.h"      /* text_compare, text_find, text_format, text_search */
 
 
 /*************
@@ -208,7 +208,7 @@ void format_results(char * output, char ** addl_head_ptr, const char ** body_att
 {
   static const size_t k = sizeof(struct geojson_info);
 
-  int i, n = -1, m, j, g = -1;
+  int n = -1, m, g = -1;
   char * p, * q, * r;
   struct geojson_info info, * infos = NULL;
 
@@ -236,40 +236,40 @@ void format_results(char * output, char ** addl_head_ptr, const char ** body_att
   /* If no <tr> tag is found, it could mean a query error or no rows were returned (as
    * with SQL*Plus).  In this case, just use the content of the <body> element as-is.
    */
-  if (!(i = text_search(output, "<tr>")))
+  if (!(p = text_find(output, "<tr>")))
   {
     *body_attr_ptr = *addl_head_ptr = NULL;
-    i = text_search(output, "<body>") + 5;
-    output[text_search(output, "</body>") - 1] = '\0';
-    *body_content_ptr = (char *)malloc(strlen(output) - i + 1);
-    p = jb_trim(output + i);
+    p = text_find(output, "<body>") + 6;
+    *(q = text_find(p, "</body>")) = '\0';
+    *body_content_ptr = (char *)malloc(n = (q - p) + 1);
+    p = jb_trim(p);
     memcpy(*body_content_ptr, p, strlen(p) + 1);
     return;
   }
 
   /* Iterate through each row, looking for a GeoJSON geometry column. */
-  for (q = p = output + i - 1; i = text_search(q, "</tr>"); q += 4)
+  for (r = q = p; r = text_find(q, "</tr>"); q = r + 5)
   {
-    /* Advance the end-pointer, and increment the row count.  If this is the header
-     * row, or we already know that there's no geometry column, go on to the next row.
+    /* Increment the row count.  If this is the header row, or we already
+     * know that there's no geometry column, go on to the next row.
      */
-    q += i; ++n; if (!n || !g) continue;
+    ++n; if (!n || !g) continue;
 
     /* Iterate through each cell, looking for a consistent geometry column. */
-    for (m = 1, r = q - i; (j = text_search(r, "<td")) && (r += j) < q; ++m)
+    for (m = 1; (q = text_find(q, "<td")) && q < r; ++m)
     {
       /* Advance the content pointer to the character after the <td> tag.  (There may be attributes in this tag.) */
-      while (*r++ != '>');
+      while (*q++ != '>');
 
       /* Determine whether or not this cell contains valid GeoJSON geometry. */
       if (g > 0)
       {
         if (m < g) continue;
-        if (m > g || geojson_parse(r, &info)) { g = 0; break; }
+        if (m > g || geojson_parse(q, &info)) { g = 0; break; }
       }
       else
       {
-        if (geojson_parse(r, &info)) continue;
+        if (geojson_parse(q, &info)) continue;
         g = m;
       }
 

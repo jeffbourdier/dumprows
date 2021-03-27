@@ -24,6 +24,21 @@
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Find the first case-insensitive occurrence of a substring within a string.
+ *   haystack:  string to search
+ *   needle:  substring to find
+ * Return Value:  A pointer to the first occurrence of the substring, or NULL if the substring was not found.
+ */
+char * text_find(char * haystack, const char * needle)
+{
+  size_t n = strlen(needle);
+  char * p, * q = haystack + strlen(haystack) - n;
+
+  for (p = haystack; p <= q; ++p) if (!text_compare(p, needle, n)) return p;
+  return NULL;
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Find the first unquoted, case-insensitive occurrence of a substring within a string.
  *   haystack:  string to search
  *   needle:  substring to find
