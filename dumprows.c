@@ -23,7 +23,7 @@
 #endif
 #include <stdio.h>     /* fclose, FILE, fprintf, fputc, remove */
 #include <stdlib.h>    /* EXIT_FAILURE, EXIT_SUCCESS, free, getenv/_dupenv_s, malloc, realloc, system */
-#include <string.h>    /* memcpy, strcat_s, strchr, strlen */
+#include <string.h>    /* memcpy, strcat_s, strchr, strlen, strncmp */
 #include <time.h>      /* localtime/localtime_s, strftime, time, (struct) tm */
 #include "geojson.h"   /* (struct) geojson_info, geojson_parse */
 #include "html.h"      /* html_element, html_format, html_output */
@@ -44,7 +44,7 @@ static const char * STR_HELP =
   "  -l, --log   write message to log file";
 static const char * STR_REMOTE_ADDR = "remote address could not be retrieved";
 static const char * STR_QUERY_STRING = "query string could not be retrieved";
-static const char * STR_INVALID_QUERY = "query string is not a valid SQL SELECT statement";
+static const char * STR_INVALID_QUERY = "query is not a valid SQL SELECT statement";
 static const char * STR_TMP_PATH = "temporary path could not be determined";
 static const char * STR_FILE_WRITTEN = "temporary file could not be written";
 static const char * STR_FILE_READ = "temporary file could not be read";
@@ -71,8 +71,8 @@ static const char * STR_DB_UTILITY = "database utility could not be executed";
 
 int validate_query(const char * s);
 void format_results(char * output, char ** addl_head_ptr, const char ** body_attr_ptr, char ** body_content_ptr);
-int finalize(char * name, time_t t, char * remote_addr, char * query_string, const char * error);
-void log_message(char * name, time_t t, char * remote_addr, char * query_string, const char * error);
+int finalize(char * name, time_t t, char * remote, char * query, const char * error);
+void log_message(char * name, time_t t, char * remote, char * query, const char * error);
 
 
 /*************
@@ -106,31 +106,50 @@ int main(int argc, char * argv[])
 
   /* Retrieve the following CGI environment variables:
    *   - REMOTE_ADDR, which is used in logging and temporary file naming
-   *   - QUERY_STRING, which should be an SQL SELECT statement
+   *   - QUERY_STRING, which should contain an SQL SELECT statement
    */
   if (get_environment_variable(&r, "REMOTE_ADDR") || !r) return finalize(v, t, NULL, NULL, STR_REMOTE_ADDR);
   if (get_environment_variable(&p, "QUERY_STRING") || !p) return finalize(v, t, r, NULL, STR_QUERY_STRING);
 
-  /* URL-decode the query string. */
-  q = (char *)malloc(n = strlen(p) + 2);
-  for (p0 = p, q0 = q; p1 = strchr(p0, '%'); p0 += n + 3, q0 += n + 1)
+  /* If the query string is empty, output a web page to prompt for a query. */
+  if (!strlen(p))
+  {
+#ifdef _WIN32
+    free(p);
+#endif
+    html_output("prompt", "<style>form { text-align: center; } textarea { width: 99%; }</style>", NULL,
+      "<form><p><textarea rows=\"25\" name=\"query\"></textarea></p><p><input type=\"submit\" /></p></form>");
+    return finalize(v, t, r, NULL, NULL);
+  }
+
+  /* The query string must begin with "query=". */
+  if (strncmp(p, "query=", 6))
+  {
+#ifdef _WIN32
+    free(p);
+#endif
+    return finalize(v, t, r, NULL, STR_INVALID_QUERY);
+  }
+
+  /* URL-decode the query. */
+  for (q0 = q = (char *)malloc(strlen(p0 = p + 6) + 2); p1 = strchr(p0, '%'); p0 += n + 3, q0 += n + 1)
   {
     if (!p1[1]) break; i = 0x10 * char_to_hex(p1[1]);
     if (!p1[2]) break; i += char_to_hex(p1[2]);
     memcpy(q0, p0, n = p1 - p0);
     q0[n] = i;
   }
-  memcpy(q0, p0, n = strlen(p0) + 1);
+  memcpy(q0, p0, strlen(p0) + 1);
 #ifdef _WIN32
   free(p);
 #endif
 
-  /* Verify that the query string is a valid SQL SELECT statement. */
+  /* Verify that the query is a valid SQL SELECT statement. */
   if (!(n = validate_query(q0 = jb_trim(q)))) return finalize(v, t, r, q, STR_INVALID_QUERY);
   if (q0[n - 1] != ';') { q0[n] = ';'; q0[++n] = '\0'; }
 
-  /* Write the query string to a temporary file.  This will serve as
-   * input to the database utility command line, to be executed shortly.
+  /* Write the query to a temporary file.  This will serve as input
+   * to the database utility command line, to be executed shortly.
    */
 #ifdef _WIN32
   /* For some very mysterious reason, if r is passed to text_format,
@@ -290,12 +309,12 @@ void format_results(char * output, char ** addl_head_ptr, const char ** body_att
  * Output (as HTML) an error message, and/or write a message to the log file.
  *   name:  pathname of executable file if logging; otherwise, NULL
  *   t:  value of time (in seconds since Epoch)
- *   remote_addr:  CGI environment variable (IP address of remote host)
- *   query_string:  CGI environment variable (query string from URL)
+ *   remote:  IP address of remote host
+ *   query:  URL-decoded query (SQL SELECT statement)
  *   error:  error message (if any)
  * Return Value:  Exit status (EXIT_SUCCESS or EXIT_FAILURE).
  */
-int finalize(char * name, time_t t, char * remote_addr, char * query_string, const char * error)
+int finalize(char * name, time_t t, char * remote, char * query, const char * error)
 {
   static const char * format = "<h1>Error: %s</h1>";
 
@@ -312,13 +331,13 @@ int finalize(char * name, time_t t, char * remote_addr, char * query_string, con
   }
 
   /* If specified, write a message to the log file. */
-  if (name) log_message(name, t, remote_addr, query_string, error);
+  if (name) log_message(name, t, remote, query, error);
 
   /* Free memory as needed. */
 #ifdef _WIN32
-  free(remote_addr);
+  free(remote);
 #endif
-  free(query_string);
+  free(query);
 
   /* Return the appropriate exit status based on whether or not there is an error message. */
   return error ? EXIT_FAILURE : EXIT_SUCCESS;
@@ -328,11 +347,11 @@ int finalize(char * name, time_t t, char * remote_addr, char * query_string, con
  * Write a message to the log file.
  *   name:  pathname of executable file
  *   t:  value of time (in seconds since Epoch)
- *   remote_addr:  CGI environment variable (IP address of remote host)
- *   query_string:  CGI environment variable (query string from URL)
+ *   remote:  IP address of remote host
+ *   query:  URL-decoded query (SQL SELECT statement)
  *   error:  error message (if any)
  */
-void log_message(char * name, time_t t, char * remote_addr, char * query_string, const char * error)
+void log_message(char * name, time_t t, char * remote, char * query, const char * error)
 {
 #ifdef _WIN32
   static const char * r = "C:\\ProgramData\\";
@@ -375,9 +394,9 @@ void log_message(char * name, time_t t, char * remote_addr, char * query_string,
   jb_file_open(&f, s, "a");
   if (!f) return;
   fprintf(f, "\n%s", ts);
-  if (remote_addr) fprintf(f, "\t%s", remote_addr);
+  if (remote) fprintf(f, "\t%s", remote);
   if (error) fprintf(f, "\nError: %s", error);
-  if (query_string) fprintf(f, "\n%s", query_string);
+  if (query) fprintf(f, "\n%s", query);
   fputc('\n', f);
   fclose(f);
 }
