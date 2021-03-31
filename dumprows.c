@@ -131,6 +131,9 @@ int main(int argc, char * argv[])
     return finalize(v, t, r, NULL, STR_INVALID_QUERY);
   }
 
+  /* Replace plus signs in the query string with spaces. */
+  for (p0 = p + 6; *p0; ++p0) if (*p0 == '+') *p0 = ' ';
+
   /* URL-decode the query. */
   for (q0 = q = (char *)malloc(strlen(p0 = p + 6) + 2); p1 = strchr(p0, '%'); p0 += n + 3, q0 += n + 1)
   {
