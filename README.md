@@ -1,4 +1,4 @@
-DUMPROWS (Database Utility Map-Producing Read-Only Web Service) is a [CGI](https://en.wikipedia.org/wiki/Common_Gateway_Interface) program that allows a database to be queried using a web browser.
+DUMPROWS (Database Utility Map-Producing Read-Only Web Service) is a [CGI](https://en.wikipedia.org/wiki/Common_Gateway_Interface) program that allows a geospatial database to be queried using a web browser.
 
 Home Page:  https://jeffbourdier.github.io/dumprows
 

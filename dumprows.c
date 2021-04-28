@@ -21,7 +21,7 @@
 #  include <libgen.h>  /* basename */
 #  include <stdint.h>  /* uintmax_t */
 #endif
-#include <stdio.h>     /* fclose, FILE, fprintf, fputc, remove */
+#include <stdio.h>     /* fclose, FILE, fprintf, fputs, remove */
 #include <stdlib.h>    /* EXIT_FAILURE, EXIT_SUCCESS, free, getenv/_dupenv_s, malloc, realloc, system */
 #include <string.h>    /* memcpy, strcat_s, strchr, strlen, strncmp */
 #include <time.h>      /* localtime/localtime_s, strftime, time, (struct) tm */
@@ -49,6 +49,7 @@ static const char * STR_TMP_PATH = "temporary path could not be determined";
 static const char * STR_FILE_WRITTEN = "temporary file could not be written";
 static const char * STR_FILE_READ = "temporary file could not be read";
 static const char * STR_DB_UTILITY = "database utility could not be executed";
+static const char * STR_HORIZONTAL_LINE = "------------------------------------------------------------------------------\n";
 
 
 /*********************
@@ -391,15 +392,23 @@ void log_message(char * name, time_t t, char * remote, char * query, const char 
   free(tm_ptr);
 #endif
 
+  /* Retrieve the CGI environment variable SCRIPT_NAME, which identifies the "source." */
+  if (get_environment_variable(&p, "SCRIPT_NAME")) p = NULL;
+
   /* Append the message to the log file.
    * (Note that on Win32, by default, a file is opened in text mode, so "\n" is translated to "\r\n" on output.)
    */
   jb_file_open(&f, s, "a");
   if (!f) return;
-  fprintf(f, "\n%s", ts);
-  if (remote) fprintf(f, "\t%s", remote);
-  if (error) fprintf(f, "\nError: %s", error);
-  if (query) fprintf(f, "\n%s", query);
-  fputc('\n', f);
+  fputs(STR_HORIZONTAL_LINE, f);
+  fprintf(f, "Timestamp:  %s\n", ts);
+  if (p) fprintf(f, "Script Name:  %s\n", p);
+#ifdef _WIN32
+  free(p);
+#endif
+  if (remote) fprintf(f, "Remote IP Address:  %s\n", remote);
+  if (error) fprintf(f, "Error:  %s\n", error);
+  if (query) fprintf(f, "Query:\n%s\n", query);
+  fputs(STR_HORIZONTAL_LINE, f);
   fclose(f);
 }
