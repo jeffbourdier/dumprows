@@ -49,7 +49,6 @@ static const char * STR_TMP_PATH = "temporary path could not be determined";
 static const char * STR_FILE_WRITTEN = "temporary file could not be written";
 static const char * STR_FILE_READ = "temporary file could not be read";
 static const char * STR_DB_UTILITY = "database utility could not be executed";
-static const char * STR_HORIZONTAL_LINE = "------------------------------------------------------------------------------\n";
 
 
 /*********************
@@ -70,6 +69,7 @@ static const char * STR_HORIZONTAL_LINE = "-------------------------------------
  * Private Function Declarations *
  *********************************/
 
+void format_prompt(char ** addl_head_ptr, const char ** body_attr_ptr, const char ** body_content_ptr);
 int validate_query(const char * s);
 void format_results(char * output, char ** addl_head_ptr, const char ** body_attr_ptr, char ** body_content_ptr);
 int finalize(char * name, time_t t, char * remote, char * query, const char * error);
@@ -118,8 +118,9 @@ int main(int argc, char * argv[])
 #ifdef _WIN32
     free(p);
 #endif
-    html_output("prompt", "<style>form { text-align: center; } textarea { width: 99%; }</style>", NULL,
-      "<form><p><textarea rows=\"25\" name=\"query\"></textarea></p><p><input type=\"submit\" /></p></form>");
+    format_prompt(&q0, &p1, &p0);
+    html_output("prompt", q0, p1, p0);
+    free(q0);
     return finalize(v, t, r, NULL, NULL);
   }
 
@@ -191,6 +192,134 @@ int main(int argc, char * argv[])
   html_output("results", q0, p1, p0);
   free(p); free(q0); free(p0);
   return finalize(v, t, r, q, NULL);
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Build formatted strings representing the content/attribution for an HTML document to prompt for a query.
+ *   addl_head_ptr:  receives additional <head> element content (style, etc.)
+ *   body_attr_ptr:  receives <body> element attribution (e.g., onload)
+ *   body_content_ptr:  receives <body> element content
+ */
+void format_prompt(char ** addl_head_ptr, const char ** body_attr_ptr, const char ** body_content_ptr)
+{
+  static const char * head_format =
+    "<style>textarea { width: 99%%; min-height: 150px; resize: vertical; }</style>"
+    "<script type=\"text/javascript\"><!--\r\n"
+      "var selectElement, messageP, divElement, buttonElement, controls, "
+        "pElements = [], fileReader = new FileReader(), templates = "
+        "[ { title: '' }, "
+          "{ title: 'Row Count', "
+            "format: 'SELECT COUNT(*) FROM {Table}', "
+            "parameters: ['Table'] }, "
+          "{ title: 'Unique Values', "
+            "format: 'SELECT {Column}, COUNT(*) FROM {Table} GROUP BY {Column} ORDER BY 2 DESC', "
+            "parameters: ['Table', 'Column'] }, %s ]; "
+      "function init() "
+      "{ selectElement = document.getElementsByTagName('select')[0]; "
+        "messageP = document.getElementById('messageP'); "
+        "divElement = document.getElementsByTagName('div')[0]; "
+        "buttonElement = document.getElementsByTagName('button')[0]; "
+        "controls = document.forms[0].elements; "
+        "for (var n = templates.length, i = 0; i < n; ++i) addTemplate(templates[i]); "
+      "} "
+      "function loadTemplates(fileInput) "
+      "{ fileReader.onloadend = function () "
+        "{ if (processTemplates(fileReader.result)) "
+          "{ messageP.textContent = 'Templates loaded successfully.'; "
+            "messageP.style.color = 'green'; "
+          "} "
+          "else "
+          "{ messageP.textContent = 'Template file is invalid.'; "
+            "messageP.style.color = 'red'; "
+          "} "
+        "}; "
+        "fileReader.readAsText(fileInput.files[0]); "
+      "} "
+      "function processTemplates(text) "
+      "{ var a, n, i, p, m, j; "
+        "try { a = JSON.parse(text); } "
+        "catch (ex) { console.error(ex); return false; } "
+        "if (!Array.isArray(a)) return false; "
+        "for (n = a.length, i = 0; i < n; ++i) "
+        "{ p = a[i]; "
+          "if (!p.hasOwnProperty('title') || typeof p.title != 'string') return false; "
+          "if (!p.hasOwnProperty('format') || typeof p.format != 'string') return false; "
+          "if (!p.hasOwnProperty('parameters') || !Array.isArray(p.parameters)) return false; "
+          "for (m = p.parameters.length, j = 0; j < m; ++j) if (typeof p.parameters[j] != 'string') return false; "
+          "templates.push(p); "
+          "addTemplate(p); "
+        "} "
+        "return true; "
+      "} "
+      "function addTemplate(template) "
+      "{ var p = document.createElement('option'); "
+        "p.text = template.title; "
+        "selectElement.add(p); "
+      "} "
+      "function selectTemplate() "
+      "{ buttonElement.disabled = true; "
+        "divElement.innerHTML = ''; "
+        "if (!selectElement.selectedIndex) return; "
+        "var p, q, r, m, i, a = templates[selectElement.selectedIndex].parameters, n = a.length; "
+        "if (!n) { buttonElement.disabled = false; return; } "
+        "for (m = pElements.length, i = 0; i < n; ++i) "
+        "{ if (m > i) "
+          "{ p = pElements[i]; "
+            "q = p.firstChild; "
+            "q.lastChild.value = ''; "
+            "q.firstChild.textContent = a[i] + ': '; "
+          "} "
+          "else "
+          "{ p = document.createElement('p'); "
+            "q = document.createElement('label'); "
+            "q.textContent = a[i] + ': '; "
+            "r = document.createElement('input'); "
+            "r.type = 'text'; "
+            "r.oninput = function (e) "
+            "{ for (var n = templates[selectElement.selectedIndex].parameters.length, i = 0; i < n; ++i) "
+                "if (!pElements[i].firstChild.lastChild.value.length) { buttonElement.disabled = true; return; } "
+              "buttonElement.disabled = false; "
+            "}; "
+            "q.appendChild(r); "
+            "p.appendChild(q); "
+            "pElements.push(p); "
+          "}; "
+          "divElement.appendChild(p); "
+        "} "
+      "} "
+      "function generateQuery() "
+      "{ var n, i, p = templates[selectElement.selectedIndex], q = p.format, a = p.parameters; "
+        "for (n = a.length, i = 0; i < n; ++i) "
+          "q = q.replace(new RegExp('\\{' + a[i] + '\\}', 'g'), pElements[i].firstChild.lastChild.value); "
+        "controls[0].value = q; "
+        "controls[1].disabled = false; "
+      "}\r\n"
+      "//-->\r\n"
+    "</script>";
+  static const char * body_attr = "onload=\"init()\"";
+  static const char * body_content =
+    "<p>Query Templates: <select oninput=\"selectTemplate()\"></select></p>"
+    "<p>Load query templates from file: <input type=\"file\" oninput=\"loadTemplates(this)\" /></p>"
+    "<p id=\"messageP\"></p>"
+    "<fieldset>"
+      "<legend>Template Parameters</legend>"
+      "<div></div>"
+      "<button onclick=\"generateQuery()\" disabled>Generate Query</button>"
+    "</fieldset>"
+    "<form>"
+      "<p>Query:<br /><textarea name=\"query\" oninput=\"controls[1].disabled=!controls[0].value.length\"></textarea></p>"
+      "<p><input type=\"submit\" disabled /></p>"
+    "</form>";
+
+  size_t n;
+
+  /* Build the additional <head> element content (including any query templates found on the server). */
+  *addl_head_ptr = (char *)malloc(n = strlen(head_format));
+  text_format(*addl_head_ptr, n, head_format, "");
+
+  /* The <body> element attribution and content are straightforward. */
+  *body_attr_ptr = body_attr;
+  *body_content_ptr = body_content;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -362,6 +491,7 @@ void log_message(char * name, time_t t, char * remote, char * query, const char 
 #else
   static const char * r = "/var/log/";
 #endif
+  static const char * h = "------------------------------------------------------------------------------\n";
 
   char * p, s[JB_PATH_MAX_LENGTH], ts[20];
   struct tm * tm_ptr;
@@ -400,7 +530,7 @@ void log_message(char * name, time_t t, char * remote, char * query, const char 
    */
   jb_file_open(&f, s, "a");
   if (!f) return;
-  fputs(STR_HORIZONTAL_LINE, f);
+  fputs(h, f);
   fprintf(f, "Timestamp:  %s\n", ts);
   if (p) fprintf(f, "Script Name:  %s\n", p);
 #ifdef _WIN32
@@ -409,6 +539,6 @@ void log_message(char * name, time_t t, char * remote, char * query, const char 
   if (remote) fprintf(f, "Remote IP Address:  %s\n", remote);
   if (error) fprintf(f, "Error:  %s\n", error);
   if (query) fprintf(f, "Query:\n%s\n", query);
-  fputs(STR_HORIZONTAL_LINE, f);
+  fputs(h, f);
   fclose(f);
 }
