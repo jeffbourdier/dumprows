@@ -96,7 +96,7 @@ int main(int argc, char * argv[])
   int n, i;
   char * v, * r, * p, * q, * p0, * q0, s[JB_PATH_MAX_LENGTH], s0[JB_PATH_MAX_LENGTH], s1[JB_PATH_MAX_LENGTH];
   time_t t = time(NULL);
-  const char * p1;
+  const char * p1, * q1;
   struct stat st;
 
   /* Verify usage. */
@@ -118,8 +118,8 @@ int main(int argc, char * argv[])
 #ifdef _WIN32
     free(p);
 #endif
-    format_prompt(&q0, &p1, &p0);
-    html_output("prompt", q0, p1, p0);
+    format_prompt(&q0, &p1, &q1);
+    html_output("prompt", q0, p1, q1);
     free(q0);
     return finalize(v, t, r, NULL, NULL);
   }
