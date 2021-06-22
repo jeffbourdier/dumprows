@@ -14,7 +14,6 @@
  * Include Files *
  *****************/
 
-#include <sys/stat.h>  /* stat, (struct) stat */
 #include <ctype.h>     /* isdigit, isupper */
 #include <limits.h>    /* INT_MIN */
 #ifndef _WIN32
@@ -29,7 +28,7 @@
 #include "html.h"      /* html_element, html_format, html_output */
 #include "jb.h"        /* (struct) jb_command_option, jb_command_parse, jb_exe_strip,
                           jb_file_open, jb_file_write, JB_PATH_MAX_LENGTH, jb_trim */
-#include "text.h"      /* text_compare, text_find, text_format, text_search */
+#include "text.h"      /* text_compare, text_find, text_format, text_read, text_search */
 
 
 /*************
@@ -40,8 +39,9 @@ static const char * STR_USAGE = "COMMAND";
 static const char * STR_HELP =
   "DUMPROWS (Database Utility Map-Producing Read-Only Web Service).\n"
   "Options:\n"
-  "  -h, --help  output this message and exit\n"
-  "  -l, --log   write message to log file";
+  "  -h, --help           output this message and exit\n"
+  "  -l, --log            write message to log file\n"
+  "  -t, --template=FILE  load query templates from file";
 static const char * STR_REMOTE_ADDR = "remote address could not be retrieved";
 static const char * STR_QUERY_STRING = "query string could not be retrieved";
 static const char * STR_INVALID_QUERY = "query is not a valid SQL SELECT statement";
@@ -69,7 +69,7 @@ static const char * STR_DB_UTILITY = "database utility could not be executed";
  * Private Function Declarations *
  *********************************/
 
-void format_prompt(char ** addl_head_ptr, const char ** body_attr_ptr, const char ** body_content_ptr);
+void format_prompt(const char * filename, char ** addl_head_ptr, const char ** body_attr_ptr, const char ** body_content_ptr);
 int validate_query(const char * s);
 void format_results(char * output, char ** addl_head_ptr, const char ** body_attr_ptr, char ** body_content_ptr);
 int finalize(char * name, time_t t, char * remote, char * query, const char * error);
@@ -90,14 +90,14 @@ int main(int argc, char * argv[])
 
   static struct jb_command_option options[] =
   {
-    { { "log", "l" }, 0 }
+    { { "log",       "l" }, 0 },
+    { { "template=", "t" }, 0 }
   };
 
   int n, i;
   char * v, * r, * p, * q, * p0, * q0, s[JB_PATH_MAX_LENGTH], s0[JB_PATH_MAX_LENGTH], s1[JB_PATH_MAX_LENGTH];
   time_t t = time(NULL);
-  const char * p1;
-  struct stat st;
+  const char * p1, * q1;
 
   /* Verify usage. */
   n = sizeof(options) / sizeof(struct jb_command_option);
@@ -118,8 +118,8 @@ int main(int argc, char * argv[])
 #ifdef _WIN32
     free(p);
 #endif
-    format_prompt(&q0, &p1, &p0);
-    html_output("prompt", q0, p1, p0);
+    format_prompt(options[1].argument, &q0, &p1, &q1);
+    html_output("prompt", q0, p1, q1);
     free(q0);
     return finalize(v, t, r, NULL, NULL);
   }
@@ -182,10 +182,9 @@ int main(int argc, char * argv[])
   if (n < 0) { remove(s1); return finalize(v, t, r, q, STR_DB_UTILITY); }
 
   /* Read (from the resulting temporary file) the HTML output produced by the database utility command line. */
-  if (!(n = stat(s1, &st))) p = (char *)jb_file_read(s1, st.st_size);
+  p = text_read(s1);
   remove(s1);
-  if (n || !p) return finalize(v, t, r, q, STR_FILE_READ);
-  p[st.st_size] = '\0';
+  if (!p) return finalize(v, t, r, q, STR_FILE_READ);
 
   /* Output the results, and we're done. */
   format_results(p, &q0, &p1, &p0);
@@ -196,11 +195,12 @@ int main(int argc, char * argv[])
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Build formatted strings representing the content/attribution for an HTML document to prompt for a query.
+ *   filename:  name of query template (JSON) file
  *   addl_head_ptr:  receives additional <head> element content (style, etc.)
  *   body_attr_ptr:  receives <body> element attribution (e.g., onload)
  *   body_content_ptr:  receives <body> element content
  */
-void format_prompt(char ** addl_head_ptr, const char ** body_attr_ptr, const char ** body_content_ptr)
+void format_prompt(const char * filename, char ** addl_head_ptr, const char ** body_attr_ptr, const char ** body_content_ptr)
 {
   static const char * head_format =
     "<style>textarea { width: 99%%; min-height: 150px; resize: vertical; }</style>"
@@ -213,7 +213,7 @@ void format_prompt(char ** addl_head_ptr, const char ** body_attr_ptr, const cha
             "parameters: ['Table'] }, "
           "{ title: 'Unique Values', "
             "format: 'SELECT {Column}, COUNT(*) FROM {Table} GROUP BY {Column} ORDER BY 2 DESC', "
-            "parameters: ['Table', 'Column'] }, %s ]; "
+            "parameters: ['Table', 'Column'] } ], templateText = '%s'; "
       "function init() "
       "{ selectElement = document.getElementsByTagName('select')[0]; "
         "messageP = document.getElementById('messageP'); "
@@ -221,6 +221,7 @@ void format_prompt(char ** addl_head_ptr, const char ** body_attr_ptr, const cha
         "buttonElement = document.getElementsByTagName('button')[0]; "
         "controls = document.forms[0].elements; "
         "for (var n = templates.length, i = 0; i < n; ++i) addTemplate(templates[i]); "
+        "processTemplates(templateText); "
       "} "
       "function loadTemplates(fileInput) "
       "{ fileReader.onloadend = function () "
@@ -311,11 +312,29 @@ void format_prompt(char ** addl_head_ptr, const char ** body_attr_ptr, const cha
       "<p><input type=\"submit\" disabled /></p>"
     "</form>";
 
+  char * p, * q, * p1, * q1;
   size_t n;
 
+  /* If a query template file was specified, read its contents (which should be JSON). */
+  if (filename && (p = text_read(filename)))
+  {
+    for (q1 = q = (char *)malloc(2 * strlen(p1 = p) + 1); *p1; ++p1)
+    {
+      switch (*p1)
+      {
+      case '\n': case '\r': continue;
+      case '\'': *q1 = '\\'; ++q1;
+      }
+      *q1 = *p1; ++q1;
+    }
+    *q1 = '\0'; free(p);
+  }
+  else { q = (char *)malloc(1); *q = '\0'; }
+
   /* Build the additional <head> element content (including any query templates found on the server). */
-  *addl_head_ptr = (char *)malloc(n = strlen(head_format));
-  text_format(*addl_head_ptr, n, head_format, "");
+  *addl_head_ptr = (char *)malloc(n = strlen(head_format) + strlen(q));
+  text_format(*addl_head_ptr, n, head_format, q);
+  free(q);
 
   /* The <body> element attribution and content are straightforward. */
   *body_attr_ptr = body_attr;

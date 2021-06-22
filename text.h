@@ -49,6 +49,7 @@
  *************************/
 
 char * text_find(char * haystack, const char * needle);
+char * text_read(const char * path);
 int text_search(const char * haystack, const char * needle);
 
 

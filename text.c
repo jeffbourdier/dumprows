@@ -14,8 +14,10 @@
  * Include Files *
  *****************/
 
-#include <string.h>  /* strchr, strlen, strrchr */
-#include "text.h"    /* text_compare */
+#include <sys/stat.h>  /* stat, (struct) stat */
+#include <string.h>    /* strchr, strlen, strrchr */
+#include "jb.h"        /* jb_file_read */
+#include "text.h"      /* text_compare */
 
 
 /*************
@@ -36,6 +38,20 @@ char * text_find(char * haystack, const char * needle)
 
   for (p = haystack; p <= q; ++p) if (!text_compare(p, needle, n)) return p;
   return NULL;
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Read the contents of a text file into a character buffer.
+ *   path:  file pathname
+ * Return Value:  On success, a pointer to the data read from the file.  (Memory for this buffer is obtained
+ *   with malloc, and should be freed with free.)  Otherwise, NULL (and errno is set appropriately).
+ */
+char * text_read(const char * path)
+{
+  struct stat st;
+  char * p = stat(path, &st) ? NULL : (char *)jb_file_read(path, st.st_size);
+  if (p) p[st.st_size] = '\0';
+  return p;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
