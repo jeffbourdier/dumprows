@@ -213,15 +213,15 @@ void format_prompt(const char * filename, char ** addl_head_ptr, const char ** b
             "parameters: ['Table'] }, "
           "{ title: 'Unique Values', "
             "format: 'SELECT {Column}, COUNT(*) FROM {Table} GROUP BY {Column} ORDER BY 2 DESC', "
-            "parameters: ['Table', 'Column'] } ], templateText = '%s'; "
+            "parameters: ['Table', 'Column'] } ], preloadedTemplates = %s; "
       "function init() "
       "{ selectElement = document.getElementsByTagName('select')[0]; "
         "messageP = document.getElementById('messageP'); "
         "divElement = document.getElementsByTagName('div')[0]; "
         "buttonElement = document.getElementsByTagName('button')[0]; "
         "controls = document.forms[0].elements; "
+        "Array.prototype.push.apply(templates, preloadedTemplates); "
         "for (var n = templates.length, i = 0; i < n; ++i) addTemplate(templates[i]); "
-        "processTemplates(templateText); "
       "} "
       "function loadTemplates(fileInput) "
       "{ fileReader.onloadend = function () "
@@ -312,29 +312,16 @@ void format_prompt(const char * filename, char ** addl_head_ptr, const char ** b
       "<p><input type=\"submit\" disabled /></p>"
     "</form>";
 
-  char * p, * q, * p1, * q1;
+  char * p;
   size_t n;
 
   /* If a query template file was specified, read its contents (which should be JSON). */
-  if (filename && (p = text_read(filename)))
-  {
-    for (q1 = q = (char *)malloc(2 * strlen(p1 = p) + 1); *p1; ++p1)
-    {
-      switch (*p1)
-      {
-      case '\n': case '\r': continue;
-      case '\'': *q1 = '\\'; ++q1;
-      }
-      *q1 = *p1; ++q1;
-    }
-    *q1 = '\0'; free(p);
-  }
-  else { q = (char *)malloc(1); *q = '\0'; }
+  if (!filename || !(p = text_read(filename))) { p = (char *)malloc(3); p[0] = '['; p[1] = ']'; p[2] = '\0'; }
 
   /* Build the additional <head> element content (including any query templates found on the server). */
-  *addl_head_ptr = (char *)malloc(n = strlen(head_format) + strlen(q));
-  text_format(*addl_head_ptr, n, head_format, q);
-  free(q);
+  *addl_head_ptr = (char *)malloc(n = strlen(head_format) + strlen(p));
+  text_format(*addl_head_ptr, n, head_format, p);
+  free(p);
 
   /* The <body> element attribution and content are straightforward. */
   *body_attr_ptr = body_attr;
