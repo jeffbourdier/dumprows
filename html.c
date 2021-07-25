@@ -154,7 +154,8 @@ void html_format(char * rows, struct geojson_info * infos, int info_count,
       "} "
       "function stylePoint(feature, latLng) "
       "{ return L.circleMarker(latLng, { radius: 5, color: 'maroon', fillColor: 'red', fillOpacity: 1 }); } "
-      "function addListener(feature, layer) { layer.on('click', function () { selectFeature(feature.properties.index); }); } "
+      "function addListener(feature, layer) "
+      "{ layer.on('click', function () { selectFeature(feature.properties.index, true); }); } "
       "function switchView() "
       "{ var i = selectedIndex; "
         "clearSelection(); "
@@ -165,7 +166,7 @@ void html_format(char * rows, struct geojson_info * infos, int info_count,
         "map.remove(); "
         "if (horizontal) splitVertically(); else splitHorizontally(); "
         "initMap(); "
-        "if (i) selectFeature(i); "
+        "if (i) selectFeature(i, true); "
       "} "
       "function splitHorizontally() "
       "{ orientView(true); "
@@ -193,7 +194,7 @@ void html_format(char * rows, struct geojson_info * infos, int info_count,
         "pointLayer.addTo(map); "
         "nonpointLayer.addTo(map); "
       "} "
-      "function selectFeature(index) "
+      "function selectFeature(index, scroll) "
       "{ clearSelection(); "
         "selectedGeometry = geoObject.features[(selectedIndex = index) - 1].geometry; "
         "selectRow(true); "
@@ -215,6 +216,7 @@ void html_format(char * rows, struct geojson_info * infos, int info_count,
             "forePolygon.setLatLngs(latLngs).addTo(map); "
             "break; "
         "} "
+        "if (scroll) rows[index].scrollIntoView(); "
       "} "
       "function zoomToFullExtent() { map.flyToBounds(extents); } "
       "function zoomToSelection() "
@@ -255,7 +257,7 @@ void html_format(char * rows, struct geojson_info * infos, int info_count,
   static const char * point_text     = "&bull;&nbsp;Point";
   static const char * linestring_text = "&acd;&nbsp;LineString";
   static const char * polygon_text   = "&rect;&nbsp;Polygon";
-  static const char * anchor_format = "<a href=\"javascript:selectFeature(%d)\">%s</a>";
+  static const char * anchor_format = "<a href=\"javascript:selectFeature(%d, false)\">%s</a>";
   static const char * body_format = "<div id=\"tableDiv\"><table>%s%s</table></div><div id=\"mapDiv\"></div>";
 
   char * p, * q;
