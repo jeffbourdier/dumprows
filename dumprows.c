@@ -442,7 +442,7 @@ void format_results(char * output, char ** addl_head_ptr, const char ** body_att
     if (n && g < 0) g = 0;
   }
   *q = '\0';
-  html_format(p, infos, g ? n : 0, addl_head_ptr, body_attr_ptr, body_content_ptr);
+  html_format(p, infos, n, addl_head_ptr, body_attr_ptr, body_content_ptr);
   free(infos);
 }
 
