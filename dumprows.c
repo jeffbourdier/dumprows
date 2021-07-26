@@ -40,8 +40,9 @@ static const char * STR_HELP =
   "DUMPROWS (Database Utility Map-Producing Read-Only Web Service).\n"
   "Options:\n"
   "  -h, --help           output this message and exit\n"
+  "  -k, --keep-files     do not delete temporary files\n"
   "  -l, --log            write message to log file\n"
-  "  -t, --template=FILE  load query templates from file";
+  "  -t, --template=FILE  load query templates from FILE";
 static const char * STR_REMOTE_ADDR = "remote address could not be retrieved";
 static const char * STR_QUERY_STRING = "query string could not be retrieved";
 static const char * STR_INVALID_QUERY = "query is not a valid SQL SELECT statement";
@@ -90,8 +91,9 @@ int main(int argc, char * argv[])
 
   static struct jb_command_option options[] =
   {
-    { { "log",       "l" }, 0 },
-    { { "template=", "t" }, 0 }
+    { { "log",        "l" }, 0 },
+    { { "template=",  "t" }, 0 },
+    { { "keep-files", "k" }, 0 }
   };
 
   int n, i;
@@ -178,12 +180,12 @@ int main(int argc, char * argv[])
   text_format(p, n, format, p1, s0, s1);
   n = system(p);
   free(p);
-  remove(s0);
-  if (n < 0) { remove(s1); return finalize(v, t, r, q, STR_DB_UTILITY); }
+  if (!(i = options[2].is_present)) remove(s0);
+  if (n < 0) { if (!i) remove(s1); return finalize(v, t, r, q, STR_DB_UTILITY); }
 
   /* Read (from the resulting temporary file) the HTML output produced by the database utility command line. */
   p = text_read(s1);
-  remove(s1);
+  if (!i) remove(s1);
   if (!p) return finalize(v, t, r, q, STR_FILE_READ);
 
   /* Output the results, and we're done. */
