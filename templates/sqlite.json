@@ -1,10 +1,10 @@
 [
   { "title": "Objects",
     "format": "SELECT type, name FROM sqlite_master ORDER BY type ASC, name ASC",
-    "parameters": []
+    "params": []
   },
   { "title": "Object SQL",
     "format": "SELECT sql FROM sqlite_master WHERE (name = '{Name}')",
-    "parameters": ["Name"]
+    "params": ["Name"]
   }
 ]

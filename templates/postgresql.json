@@ -1,42 +1,42 @@
 [
   { "title": "Namespaces",
     "format": "SELECT oid, nspname FROM pg_namespace",
-    "parameters": []
+    "params": []
   },
   { "title": "Tables (and Views)",
-    "format": "SELECT pg_namespace.nspname, pg_class.relname, obj_description(pg_class.oid, 'pg_class') AS desc\nFROM pg_class INNER JOIN pg_namespace ON (pg_class.relnamespace = pg_namespace.oid)\nORDER BY nspname, relname",
-    "parameters": []
+    "format": "SELECT pg_namespace.nspname, pg_class.relname, obj_description(pg_class.oid, 'pg_class') AS desc\\nFROM pg_class INNER JOIN pg_namespace ON (pg_class.relnamespace = pg_namespace.oid)\\nORDER BY nspname, relname",
+    "params": []
   },
   { "title": "Tables (and Views) by Namespace",
-    "format": "SELECT relname, obj_description(pg_class.oid, 'pg_class') AS desc\nFROM pg_class\nWHERE (relnamespace = (SELECT oid FROM pg_namespace WHERE (nspname = '{Namespace}')))\nORDER BY relname",
-    "parameters": ["Namespace"]
+    "format": "SELECT relname, obj_description(pg_class.oid, 'pg_class') AS desc\\nFROM pg_class\\nWHERE (relnamespace = (SELECT oid FROM pg_namespace WHERE (nspname = '{Namespace}')))\\nORDER BY relname",
+    "params": ["Namespace"]
   },
   { "title": "Table Columns",
-    "format": "SELECT attnum, attname, atttypid, attlen, atttypmod, col_description(attrelid, attnum) AS desc\nFROM pg_attribute\nWHERE (attrelid = (SELECT oid FROM pg_class WHERE (relname = '{Table}'))) AND (attnum > 0)\nORDER BY attnum ASC",
-    "parameters": ["Table"]
+    "format": "SELECT attnum, attname, atttypid, attlen, atttypmod, col_description(attrelid, attnum) AS desc\\nFROM pg_attribute\\nWHERE (attrelid = (SELECT oid FROM pg_class WHERE (relname = '{Table}'))) AND (attnum > 0)\\nORDER BY attnum ASC",
+    "params": ["Table"]
   },
   { "title": "Table Columns (with type names)",
-    "format": "SELECT tf.attname, pg_type.typname, pg_type.typcategory, col_description(attrelid, attnum) AS desc\nFROM\n  ( SELECT attrelid, attnum, attname, atttypid\n    FROM pg_attribute\n    WHERE (attrelid = (SELECT oid FROM pg_class WHERE (relname = '{Table}'))) AND (attnum > 0)\n  ) tf\n  INNER JOIN pg_type\n  ON (tf.atttypid = pg_type.oid)\nORDER BY tf.attnum ASC",
-    "parameters": ["Table"]
+    "format": "SELECT tf.attname, pg_type.typname, pg_type.typcategory, col_description(attrelid, attnum) AS desc\\nFROM\\n  ( SELECT attrelid, attnum, attname, atttypid\\n    FROM pg_attribute\\n    WHERE (attrelid = (SELECT oid FROM pg_class WHERE (relname = '{Table}'))) AND (attnum > 0)\\n  ) tf\\n  INNER JOIN pg_type\\n  ON (tf.atttypid = pg_type.oid)\\nORDER BY tf.attnum ASC",
+    "params": ["Table"]
   },
   { "title": "View Definition",
     "format": "SELECT definition FROM pg_views WHERE (viewname = '{View}')",
-    "parameters": ["View"]
+    "params": ["View"]
   },
   { "title": "Installed Extensions",
-    "format": "SELECT pg_extension.extname, pg_extension.extversion, pg_authid.rolname\nFROM pg_extension INNER JOIN pg_authid ON (pg_extension.extowner = pg_authid.oid)",
-    "parameters": []
+    "format": "SELECT pg_extension.extname, pg_extension.extversion, pg_authid.rolname\\nFROM pg_extension INNER JOIN pg_authid ON (pg_extension.extowner = pg_authid.oid)",
+    "params": []
   },
   { "title": "Active Queries",
     "format": "SELECT pid, query_start, query FROM pg_stat_activity WHERE (state = 'active')",
-    "parameters": []
+    "params": []
   },
   { "title": "Locked Tables",
-    "format": "SELECT pg_locks.pid, pg_locks.granted, pg_stat_activity.query_start, pg_stat_activity.query\nFROM\n  (SELECT oid FROM pg_class WHERE (relname = '{Table}')) rc\n  INNER JOIN pg_locks\n  ON (rc.oid = pg_locks.relation)\n  INNER JOIN pg_stat_activity\n  ON (pg_locks.pid = pg_stat_activity.pid)",
-    "parameters": ["Table"]
+    "format": "SELECT pg_locks.pid, pg_locks.granted, pg_stat_activity.query_start, pg_stat_activity.query\\nFROM\\n  (SELECT oid FROM pg_class WHERE (relname = '{Table}')) rc\\n  INNER JOIN pg_locks\\n  ON (rc.oid = pg_locks.relation)\\n  INNER JOIN pg_stat_activity\\n  ON (pg_locks.pid = pg_stat_activity.pid)",
+    "params": ["Table"]
   },
   { "title": "Geometry as GeoJSON",
     "format": "SELECT ST_AsGeoJSON({Geometry}) FROM {Table}",
-    "parameters": ["Geometry", "Table"]
+    "params": ["Geometry", "Table"]
   }
 ]

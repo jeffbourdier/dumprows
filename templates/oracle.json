@@ -1,134 +1,134 @@
 [
   { "title": "Tables",
     "format": "SELECT OWNER, TABLE_NAME, NUM_ROWS FROM DBA_TABLES",
-    "parameters": []
+    "params": []
   },
   { "title": "Views",
     "format": "SELECT OWNER, VIEW_NAME, TEXT FROM DBA_VIEWS",
-    "parameters": []
+    "params": []
   },
   { "title": "Table/View Comments",
     "format": "SELECT * FROM DBA_TAB_COMMENTS",
-    "parameters": []
+    "params": []
   },
   { "title": "Tables (including comments)",
-    "format": "SELECT DBA_TABLES.OWNER, DBA_TABLES.TABLE_NAME, DBA_TABLES.NUM_ROWS, DBA_TAB_COMMENTS.COMMENTS\nFROM DBA_TABLES\n  INNER JOIN DBA_TAB_COMMENTS\n  ON (DBA_TABLES.OWNER = DBA_TAB_COMMENTS.OWNER AND DBA_TABLES.TABLE_NAME = DBA_TAB_COMMENTS.TABLE_NAME)",
-    "parameters": []
+    "format": "SELECT DBA_TABLES.OWNER, DBA_TABLES.TABLE_NAME, DBA_TABLES.NUM_ROWS, DBA_TAB_COMMENTS.COMMENTS\\nFROM DBA_TABLES\\n  INNER JOIN DBA_TAB_COMMENTS\\n  ON (DBA_TABLES.OWNER = DBA_TAB_COMMENTS.OWNER AND DBA_TABLES.TABLE_NAME = DBA_TAB_COMMENTS.TABLE_NAME)",
+    "params": []
   },
   { "title": "Views (including comments)",
-    "format": "SELECT DBA_VIEWS.OWNER, DBA_VIEWS.VIEW_NAME, DBA_VIEWS.TEXT, DBA_TAB_COMMENTS.COMMENTS\nFROM DBA_VIEWS\n  INNER JOIN DBA_TAB_COMMENTS\n  ON (DBA_VIEWS.OWNER = DBA_TAB_COMMENTS.OWNER AND DBA_VIEWS.VIEW_NAME = DBA_TAB_COMMENTS.TABLE_NAME)",
-    "parameters": []
+    "format": "SELECT DBA_VIEWS.OWNER, DBA_VIEWS.VIEW_NAME, DBA_VIEWS.TEXT, DBA_TAB_COMMENTS.COMMENTS\\nFROM DBA_VIEWS\\n  INNER JOIN DBA_TAB_COMMENTS\\n  ON (DBA_VIEWS.OWNER = DBA_TAB_COMMENTS.OWNER AND DBA_VIEWS.VIEW_NAME = DBA_TAB_COMMENTS.TABLE_NAME)",
+    "params": []
   },
   { "title": "Materialized Views",
-    "format": "SELECT OWNER, VIEW_NAME, \"QUERY\" FROM DBA_MVIEWS",
-    "parameters": []
+    "format": "SELECT OWNER, VIEW_NAME, \\\"QUERY\\\" FROM DBA_MVIEWS",
+    "params": []
   },
   { "title": "Materialized View Comments",
     "format": "SELECT * FROM DBA_MVIEW_COMMENTS",
-    "parameters": []
+    "params": []
   },
   { "title": "Materialized Views (including comments)",
-    "format": "SELECT DBA_MVIEWS.OWNER, DBA_MVIEWS.VIEW_NAME, DBA_MVIEWS.\"QUERY\", DBA_MVIEW_COMMENTS.COMMENTS\nFROM DBA_MVIEWS\n  INNER JOIN DBA_MVIEW_COMMENTS\n  ON (DBA_MVIEWS.OWNER = DBA_MVIEW_COMMENTS.OWNER AND DBA_MVIEWS.VIEW_NAME = DBA_MVIEW_COMMENTS.MVIEW_NAME)",
-    "parameters": []
+    "format": "SELECT DBA_MVIEWS.OWNER, DBA_MVIEWS.VIEW_NAME, DBA_MVIEWS.\\\"QUERY\\\", DBA_MVIEW_COMMENTS.COMMENTS\\nFROM DBA_MVIEWS\\n  INNER JOIN DBA_MVIEW_COMMENTS\\n  ON (DBA_MVIEWS.OWNER = DBA_MVIEW_COMMENTS.OWNER AND DBA_MVIEWS.VIEW_NAME = DBA_MVIEW_COMMENTS.MVIEW_NAME)",
+    "params": []
   },
   { "title": "Synonyms",
     "format": "SELECT * FROM DBA_SYNONYMS",
-    "parameters": []
+    "params": []
   },
   { "title": "Database Links",
     "format": "SELECT OWNER, DB_LINK, USERNAME, HOST FROM DBA_DB_LINKS",
-    "parameters": []
+    "params": []
   },
   { "title": "Table Columns",
-    "format": "SELECT COLUMN_NAME, DATA_TYPE, DATA_PRECISION, DATA_SCALE, CHAR_LENGTH\nFROM DBA_TAB_COLUMNS\nWHERE (OWNER = '{Schema}') AND (TABLE_NAME = '{Table}')\nORDER BY COLUMN_ID",
-    "parameters": ["Schema", "Table"]
+    "format": "SELECT COLUMN_NAME, DATA_TYPE, DATA_PRECISION, DATA_SCALE, CHAR_LENGTH\\nFROM DBA_TAB_COLUMNS\\nWHERE (OWNER = '{Schema}') AND (TABLE_NAME = '{Table}')\\nORDER BY COLUMN_ID",
+    "params": ["Schema", "Table"]
   },
   { "title": "Table Column Comments",
     "format": "SELECT * FROM DBA_COL_COMMENTS WHERE (OWNER = '{Schema}') AND (TABLE_NAME = '{Table}') ORDER BY COLUMN_ID",
-    "parameters": ["Schema", "Table"]
+    "params": ["Schema", "Table"]
   },
   { "title": "Table Columns (including comments)",
-    "format": "SELECT TC.*, CC.COMMENTS\nFROM\n  ( SELECT COLUMN_ID, COLUMN_NAME, DATA_TYPE, DATA_PRECISION, DATA_SCALE, CHAR_LENGTH\n    FROM DBA_TAB_COLUMNS\n    WHERE (OWNER = '{Schema}') AND (TABLE_NAME = '{Table}')\n  ) TC\n  INNER JOIN\n  ( SELECT *\n    FROM DBA_COL_COMMENTS\n    WHERE (OWNER = '{Schema}') AND (TABLE_NAME = '{Table}')\n  ) CC\n  ON (TC.COLUMN_NAME = CC.COLUMN_NAME)\nORDER BY COLUMN_ID",
-    "parameters": ["Schema", "Table"]
+    "format": "SELECT TC.*, CC.COMMENTS\\nFROM\\n  ( SELECT COLUMN_ID, COLUMN_NAME, DATA_TYPE, DATA_PRECISION, DATA_SCALE, CHAR_LENGTH\\n    FROM DBA_TAB_COLUMNS\\n    WHERE (OWNER = '{Schema}') AND (TABLE_NAME = '{Table}')\\n  ) TC\\n  INNER JOIN\\n  ( SELECT *\\n    FROM DBA_COL_COMMENTS\\n    WHERE (OWNER = '{Schema}') AND (TABLE_NAME = '{Table}')\\n  ) CC\\n  ON (TC.COLUMN_NAME = CC.COLUMN_NAME)\\nORDER BY COLUMN_ID",
+    "params": ["Schema", "Table"]
   },
   { "title": "Indexed Columns",
     "format": "SELECT * FROM DBA_IND_COLUMNS",
-    "parameters": []
+    "params": []
   },
   { "title": "Indexes",
-    "format": "SELECT OWNER, INDEX_NAME, INDEX_TYPE, TABLE_NAME, UNIQUENESS, ITYP_NAME, \"PARAMETERS\" FROM DBA_INDEXES",
-    "parameters": []
+    "format": "SELECT OWNER, INDEX_NAME, INDEX_TYPE, TABLE_NAME, UNIQUENESS, ITYP_NAME, \\\"PARAMETERS\\\" FROM DBA_INDEXES",
+    "params": []
   },
   { "title": "Constrained Columns",
     "format": "SELECT * FROM DBA_CONS_COLUMNS",
-    "parameters": []
+    "params": []
   },
   { "title": "Constraints",
     "format": "SELECT OWNER, CONSTRAINT_NAME, CONSTRAINT_TYPE, R_CONSTRAINT_NAME, INDEX_NAME FROM DBA_CONSTRAINTS",
-    "parameters": []
+    "params": []
   },
   { "title": "Triggers",
     "format": "SELECT OWNER, TRIGGER_NAME, TRIGGER_TYPE, TRIGGERING_EVENT, TABLE_NAME, WHEN_CLAUSE, DESCRIPTION, TRIGGER_BODY FROM DBA_TRIGGERS",
-    "parameters": []
+    "params": []
   },
   { "title": "Packages, Procedures, Functions, Triggers, and Types",
     "format": "SELECT OWNER, OBJECT_NAME, PROCEDURE_NAME, OBJECT_TYPE FROM DBA_PROCEDURES",
-    "parameters": []
+    "params": []
   },
   { "title": "Source (package)",
-    "format": "SELECT LINE, TEXT\nFROM DBA_SOURCE\nWHERE (OWNER = '{Schema}') AND (\"NAME\" = '{Package}') AND (\"TYPE\" = 'PACKAGE BODY')\nORDER BY LINE ASC",
-    "parameters": ["Schema", "Package"]
+    "format": "SELECT LINE, TEXT\\nFROM DBA_SOURCE\\nWHERE (OWNER = '{Schema}') AND (\\\"NAME\\\" = '{Package}') AND (\\\"TYPE\\\" = 'PACKAGE BODY')\\nORDER BY LINE ASC",
+    "params": ["Schema", "Package"]
   },
   { "title": "Source (non-package procedures, functions, triggers, and types)",
-    "format": "SELECT LINE, TEXT\nFROM DBA_SOURCE\nWHERE (OWNER = '{Schema}') AND (\"NAME\" = '{Name}')\nORDER BY LINE ASC",
-    "parameters": ["Schema", "Name"]
+    "format": "SELECT LINE, TEXT\\nFROM DBA_SOURCE\\nWHERE (OWNER = '{Schema}') AND (\\\"NAME\\\" = '{Name}')\\nORDER BY LINE ASC",
+    "params": ["Schema", "Name"]
   },
   { "title": "PL/SQL Object Settings",
-    "format": "SELECT OWNER, \"NAME\", \"TYPE\", \"PLSQL_OPTIMIZE_LEVEL\"\nFROM DBA_PLSQL_OBJECT_SETTINGS\nWHERE (\"PLSQL_DEBUG\" = 'TRUE')\nORDER BY OWNER, \"TYPE\", \"NAME\"",
-    "parameters": []
+    "format": "SELECT OWNER, \\\"NAME\\\", \\\"TYPE\\\", \\\"PLSQL_OPTIMIZE_LEVEL\\\"\\nFROM DBA_PLSQL_OBJECT_SETTINGS\\nWHERE (\\\"PLSQL_DEBUG\\\" = 'TRUE')\\nORDER BY OWNER, \\\"TYPE\\\", \\\"NAME\\\"",
+    "params": []
   },
   { "title": "Scheduled Jobs",
-    "format": "SELECT OWNER, JOB_NAME, PROGRAM_NAME, JOB_TYPE, JOB_ACTION, SCHEDULE_NAME, REPEAT_INTERVAL, ENABLED,\n  AUTO_DROP, STATE, LAST_START_DATE, LAST_RUN_DURATION, NEXT_RUN_DATE, REPEAT_INTERVAL, COMMENTS\nFROM DBA_SCHEDULER_JOBS",
-    "parameters": []
+    "format": "SELECT OWNER, JOB_NAME, PROGRAM_NAME, JOB_TYPE, JOB_ACTION, SCHEDULE_NAME, REPEAT_INTERVAL, ENABLED,\\n  AUTO_DROP, STATE, LAST_START_DATE, LAST_RUN_DURATION, NEXT_RUN_DATE, REPEAT_INTERVAL, COMMENTS\\nFROM DBA_SCHEDULER_JOBS",
+    "params": []
   },
   { "title": "Directories",
     "format": "SELECT * FROM DBA_DIRECTORIES",
-    "parameters": []
+    "params": []
   },
   { "title": "Users",
     "format": "SELECT USERNAME FROM DBA_USERS",
-    "parameters": []
+    "params": []
   },
   { "title": "Roles",
-    "format": "SELECT \"ROLE\" FROM DBA_ROLES",
-    "parameters": []
+    "format": "SELECT \\\"ROLE\\\" FROM DBA_ROLES",
+    "params": []
   },
   { "title": "Role Privileges",
     "format": "SELECT GRANTEE, GRANTED_ROLE FROM DBA_ROLE_PRIVS",
-    "parameters": []
+    "params": []
   },
   { "title": "System Privileges",
-    "format": "SELECT GRANTEE, \"PRIVILEGE\" FROM DBA_SYS_PRIVS",
-    "parameters": []
+    "format": "SELECT GRANTEE, \\\"PRIVILEGE\\\" FROM DBA_SYS_PRIVS",
+    "params": []
   },
   { "title": "Object Privileges",
-    "format": "SELECT GRANTEE, OWNER, TABLE_NAME, \"PRIVILEGE\" FROM DBA_TAB_PRIVS",
-    "parameters": []
+    "format": "SELECT GRANTEE, OWNER, TABLE_NAME, \\\"PRIVILEGE\\\" FROM DBA_TAB_PRIVS",
+    "params": []
   },
   { "title": "Objects",
     "format": "SELECT OWNER, OBJECT_NAME, OBJECT_TYPE FROM DBA_OBJECTS",
-    "parameters": []
+    "params": []
   },
   { "title": "Dependencies",
     "format": "SELECT * FROM DBA_DEPENDENCIES",
-    "parameters": []
+    "params": []
   },
   { "title": "Public Dependency",
     "format": "SELECT * FROM PUBLIC_DEPENDENCY",
-    "parameters": []
+    "params": []
   },
   { "title": "Free Space",
     "format": "SELECT * FROM DBA_FREE_SPACE",
-    "parameters": []
+    "params": []
   }
 ]
