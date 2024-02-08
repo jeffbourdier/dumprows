@@ -23,6 +23,10 @@
     "format": "SELECT definition FROM pg_views WHERE (viewname = '{View}')",
     "params": ["View"]
   },
+  { "title": "Indexes by Table",
+    "format": "SELECT * FROM pg_indexes WHERE (tablename = '{Table}')",
+    "params": ["Table"]
+  },
   { "title": "Installed Extensions",
     "format": "SELECT pg_extension.extname, pg_extension.extversion, pg_authid.rolname\\nFROM pg_extension INNER JOIN pg_authid ON (pg_extension.extowner = pg_authid.oid)",
     "params": []
@@ -38,5 +42,13 @@
   { "title": "Geometry as GeoJSON",
     "format": "SELECT ST_AsGeoJSON({Geometry}) FROM {Table}",
     "params": ["Geometry", "Table"]
+  },
+  { "title": "Functions (user-defined, excluding PostGIS)",
+    "format": "SELECT pg_namespace.nspname, pg_proc.proname, pg_language.lanname, pg_get_function_arguments(pg_proc.oid) as function_arguments, pg_type.typname\\nFROM pg_proc\\n  INNER JOIN pg_namespace ON (pg_proc.pronamespace = pg_namespace.oid)\\n  INNER JOIN pg_language ON (pg_proc.prolang = pg_language.oid)\\n  INNER JOIN pg_type ON (pg_proc.prorettype = pg_type.oid)\\nWHERE (pg_namespace.nspname NOT IN ('pg_catalog', 'information_schema'))\\n  AND (upper(pg_proc.proname) NOT LIKE 'ST\\\\_%')\\n  AND (upper(pg_proc.proname) NOT LIKE '\\\\_ST\\\\_%')\\n  AND (upper(pg_proc.proname) NOT LIKE 'POSTGIS\\\\_%')\\n  AND (upper(pg_proc.proname) NOT LIKE '\\\\_POSTGIS\\\\_%')\\nORDER BY pg_namespace.nspname, pg_proc.proname",
+    "params": []
+  },
+  { "title": "Types (user-defined)",
+    "format": "SELECT pg_namespace.nspname, pg_type.typname, pg_type.typbyval,\\n  CASE pg_type.typtype\\n    WHEN 'c' THEN 'composite'\\n    WHEN 'd' THEN 'domain'\\n    WHEN 'e' THEN 'enum'\\n    WHEN 'p' THEN 'pseudo-type'\\n    WHEN 'r' THEN 'range'\\n  END AS type_type,\\n  CASE pg_type.typcategory\\n    WHEN 'A' THEN 'Array'\\n    WHEN 'B' THEN 'Boolean'\\n    WHEN 'C' THEN 'Composite'\\n    WHEN 'D' THEN 'Date/time'\\n    WHEN 'E' THEN 'Enum'\\n    WHEN 'G' THEN 'Geometric'\\n    WHEN 'I' THEN 'Network address'\\n    WHEN 'N' THEN 'Numeric'\\n    WHEN 'P' THEN 'Pseudo-types'\\n    WHEN 'R' THEN 'Range'\\n    WHEN 'S' THEN 'String'\\n    WHEN 'T' THEN 'Timespan'\\n    WHEN 'U' THEN 'User-defined'\\n    WHEN 'V' THEN 'Bit-string'\\n    WHEN 'X' THEN 'unknown'\\n  END AS type_category\\nFROM pg_type INNER JOIN pg_namespace ON (pg_type.typnamespace = pg_namespace.oid)\\nWHERE (pg_namespace.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema')) AND (pg_type.typtype <> 'b')\\nORDER BY pg_namespace.nspname, pg_type.typname",
+    "params": []
   }
 ]
