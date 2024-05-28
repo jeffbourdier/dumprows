@@ -27,6 +27,10 @@
     "format": "SELECT * FROM pg_indexes WHERE (tablename = '{Table}')",
     "params": ["Table"]
   },
+  { "title": "Configuration Parameters",
+    "format": "SELECT name, setting, unit, category, short_desc, vartype, min_val, max_val, enumvals, reset_val FROM pg_settings",
+    "params": []
+  },
   { "title": "Installed Extensions",
     "format": "SELECT pg_extension.extname, pg_extension.extversion, pg_authid.rolname\\nFROM pg_extension INNER JOIN pg_authid ON (pg_extension.extowner = pg_authid.oid)",
     "params": []
